@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediFlow - Complete Clinic Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Financial & Operational Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        clinic: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar-transition { transition: transform 0.3s ease-in-out; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); }
+        .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Alert Banner / Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full pointer-events-none"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app-wrapper" class="flex-1 flex overflow-hidden h-screen">
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside id="sidebar" class="bg-slate-900 text-slate-300 w-64 flex-shrink-0 flex flex-col justify-between z-30 transition-all duration-300">
+            <div>
+                <!-- Clinic Logo Header -->
+                <div class="p-5 flex items-center justify-between border-b border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-sky-500 text-white p-2.5 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/30">
+                            <i class="fa-solid font-bold fa-heart-pulse text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-lg text-white leading-tight">MediFlow</h1>
+                            <p class="text-xs text-sky-400 font-medium">Care & Health System</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current User Profile Info -->
+                <div class="p-4 mx-3 my-3 bg-slate-800/80 rounded-xl border border-slate-700/50">
+                    <div class="flex items-center gap-3">
+                        <div id="user-avatar" class="w-10 h-10 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-sm shadow">
+                            AD
+                        </div>
+                        <div class="overflow-hidden">
+                            <p id="user-email" class="text-xs font-semibold text-white truncate">admin@clinic.com</p>
+                            <span id="user-role-badge" class="badge bg-sky-500/20 text-sky-300 border border-sky-500/30 mt-1">Admin</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Role Switcher -->
+                <div class="px-4 py-2">
+                    <label class="block text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1.5">Switch Role Demo:</label>
+                    <select id="role-switcher" onchange="switchRole(this.value)" class="w-full bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        <option value="admin@clinic.com">Administrator (All Access)</option>
+                        <option value="reg@clinic.com">Registration Staff</option>
+                        <option value="nurse@clinic.com">Nurse / Clinical</option>
+                        <option value="lab@clinic.com">Lab Technician</option>
+                    </select>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="mt-4 px-3 space-y-1">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-white bg-sky-600">
+                        <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
+                    </button>
+                    <button onclick="switchTab('registration')" id="nav-registration" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-id-card w-5"></i> Patient Registration
+                    </button>
+                    <button onclick="switchTab('encounters')" id="nav-encounters" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-stethoscope w-5"></i> Nurse & Diagnosis
+                    </button>
+                    <button onclick="switchTab('lab')" id="nav-lab" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-vials w-5"></i> Laboratory Tests
+                    </button>
+                    <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-pills w-5"></i> Inventory & Stock
+                    </button>
+                    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-user-shield w-5"></i> Admin & Finances
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Footer / Logout Button -->
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="openLoginModal()" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition">
+                    <i class="fa-solid fa-right-from-bracket"></i> Re-authenticate / Login
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 flex flex-col overflow-y-auto bg-slate-100 relative">
+            
+            <!-- Top App Bar -->
+            <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="lg:hidden text-slate-600 hover:text-slate-900 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <h2 id="page-title" class="text-xl font-bold text-slate-800">Clinic Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 text-xs">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="font-medium text-slate-600">Database Engine: Active (SQLite Simulation)</span>
+                    </div>
+                    <div class="text-right hidden sm:block">
+                        <div id="live-clock" class="text-xs font-semibold text-slate-700">--:--:--</div>
+                        <div id="live-date" class="text-[10px] text-slate-500">October 2026</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB CONTENT PANELS -->
+            <div class="p-6 max-w-7xl w-full mx-auto space-y-6 flex-1">
+
+                <!-- 1. DASHBOARD OVERVIEW TAB -->
+                <div id="tab-dashboard" class="tab-panel space-y-6">
+                    <!-- Stat Metric Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-slate-400">Total Registered</p>
+                                <h3 id="stat-patients-count" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                                <p class="text-xs text-emerald-600 font-medium mt-1"><i class="fa-solid fa-arrow-up"></i> Patients System</p>
+                            </div>
+                            <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-hospital-user"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-slate-400">Encounters Today</p>
+                                <h3 id="stat-encounters-count" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                                <p class="text-xs text-sky-600 font-medium mt-1"><i class="fa-solid fa-user-doctor"></i> Active visits</p>
+                            </div>
+                            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-notes-medical"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-slate-400">Pending Lab Tests</p>
+                                <h3 id="stat-pending-labs" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+                                <p class="text-xs text-amber-600 font-medium mt-1"><i class="fa-solid fa-clock"></i> Action required</p>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-microscope"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase text-slate-400">Net Revenue</p>
+                                <h3 id="stat-revenue-dash" class="text-2xl font-bold text-emerald-600 mt-1">$0.00</h3>
+                                <p class="text-xs text-slate-500 font-medium mt-1">Pharmacy & Services</p>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-sack-dollar"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Dashboard Highlights -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Quick Workflow Actions -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-slate-800 text-base">Quick Operational Actions</h3>
+                                <span class="text-xs font-medium text-slate-400">Select duty based on role</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button onclick="switchTab('registration')" class="p-4 rounded-xl border border-slate-200 hover:border-sky-500 hover:bg-sky-50/50 transition flex items-start gap-4 text-left group">
+                                    <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                        <i class="fa-solid fa-user-plus"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Register Patient</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Check returning status or issue new patient ID</p>
+                                    </div>
+                                </button>
+
+                                <button onclick="switchTab('encounters')" class="p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition flex items-start gap-4 text-left group">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                        <i class="fa-solid fa-file-waveform"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Nurse Vitals & Symptoms</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Log patient temperature, BP, and initial complaints</p>
+                                    </div>
+                                </button>
+
+                                <button onclick="switchTab('lab')" class="p-4 rounded-xl border border-slate-200 hover:border-amber-500 hover:bg-amber-50/50 transition flex items-start gap-4 text-left group">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                        <i class="fa-solid fa-vial-circle-check"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Lab Test Management</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Submit test findings for malaria, typhoid, CBC</p>
+                                    </div>
+                                </button>
+
+                                <button onclick="switchTab('inventory')" class="p-4 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition flex items-start gap-4 text-left group">
+                                    <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-lg group-hover:scale-105 transition">
+                                        <i class="fa-solid fa-boxes-packing"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-slate-800 text-sm">Medicine Stock Control</h4>
+                                        <p class="text-xs text-slate-500 mt-0.5">Restock pharmacy and review available drugs</p>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Live Activity Log -->
+                            <div class="mt-6 pt-6 border-t border-slate-100">
+                                <h4 class="font-bold text-slate-800 text-sm mb-3">Recent Patient Visits</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-xs text-slate-600">
+                                        <thead class="bg-slate-50 text-slate-500 font-semibold border-y border-slate-200">
+                                            <tr>
+                                                <th class="py-2 px-3">Patient ID</th>
+                                                <th class="py-2 px-3">Name</th>
+                                                <th class="py-2 px-3">Vitals / Status</th>
+                                                <th class="py-2 px-3">Diagnosis</th>
+                                                <th class="py-2 px-3">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dashboard-recent-visits" class="divide-y divide-slate-100">
+                                            <!-- Dynamic Rows -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Side System Role Status & Help -->
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base mb-3">System Roles & Permissions</h3>
+                                <div class="space-y-3 text-xs">
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                        <p class="font-bold text-slate-800 flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-purple-500"></span> Admin Role
+                                        </p>
+                                        <p class="text-slate-500 mt-1">Full system control, staff management, financial reports, and stock restock.</p>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                        <p class="font-bold text-slate-800 flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-sky-500"></span> Registration Staff
+                                        </p>
+                                        <p class="text-slate-500 mt-1">Patient registration, phone verification, checking repeat visit history.</p>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                        <p class="font-bold text-slate-800 flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Nurse / Clinician
+                                        </p>
+                                        <p class="text-slate-500 mt-1">Record vitals, diagnosis, smart symptom suggestion engine, prescription.</p>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                        <p class="font-bold text-slate-800 flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500"></span> Lab Technician
+                                        </p>
+                                        <p class="text-slate-500 mt-1">Receive pending lab orders and enter test results into records.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-4 rounded-xl bg-sky-50 border border-sky-100 text-xs text-sky-800">
+                                <i class="fa-solid fa-circle-info text-sky-600 mr-1"></i>
+                                <span>Tip: Use the top left role switcher to test permissions dynamically!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. PATIENT REGISTRATION TAB -->
+                <div id="tab-registration" class="tab-panel hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Registration Form -->
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                            <h3 class="font-bold text-slate-800 text-lg mb-1">Patient Intake & Search</h3>
+                            <p class="text-xs text-slate-500 mb-6">Register a new patient or search by phone to identify 2nd-time / returning visits.</p>
+
+                            <form id="patient-reg-form" onsubmit="handlePatientRegistration(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number (Lookup Key) *</label>
+                                    <div class="relative">
+                                        <input type="tel" id="reg-phone" required placeholder="+254712345678 or 0712345678" oninput="checkExistingPatientByPhone(this.value)" class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                        <i class="fa-solid fa-phone absolute left-3 top-3 text-slate-400 text-xs"></i>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Full Patient Name *</label>
+                                    <div class="relative">
+                                        <input type="text" id="reg-name" required placeholder="e.g. Jane Wanjiku" class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                        <i class="fa-solid fa-user absolute left-3 top-3 text-slate-400 text-xs"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Returning Visit Alert Box -->
+                                <div id="returning-patient-alert" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
+                                    <p class="font-bold flex items-center gap-1.5 text-amber-900">
+                                        <i class="fa-solid fa-arrows-rotate text-amber-600"></i> RETURNING PATIENT DETECTED!
+                                    </p>
+                                    <p id="returning-msg">Patient found in database. Submitting will create a new clinical visit record for this existing patient ID.</p>
+                                </div>
+
+                                <button type="submit" id="btn-submit-patient" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-sky-600/20 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-user-check"></i> Register / Start Visit
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Registered Patients Database Table -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">Patient Directory</h3>
+                                    <p class="text-xs text-slate-500">Auto-assigned sequential patient numbers</p>
+                                </div>
+                                <div class="relative w-64">
+                                    <input type="text" id="search-patients-input" onkeyup="filterPatientsTable()" placeholder="Search name or phone..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 font-semibold border-y border-slate-200">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Patient No.</th>
+                                            <th class="py-2.5 px-3">Full Name</th>
+                                            <th class="py-2.5 px-3">Phone</th>
+                                            <th class="py-2.5 px-3">Visits Count</th>
+                                            <th class="py-2.5 px-3">Registered At</th>
+                                            <th class="py-2.5 px-3">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="patients-table-body" class="divide-y divide-slate-100 text-slate-700">
+                                        <!-- Dynamic Patients Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. CLINICAL ENCOUNTERS (NURSE & DIAGNOSIS) TAB -->
+                <div id="tab-encounters" class="tab-panel hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Left: Record Encounter / Vitals Form -->
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                            <h3 class="font-bold text-slate-800 text-lg">Clinical Consultation</h3>
+                            <p class="text-xs text-slate-500">Record vitals, view AI disease suggestions, prescribe medicine.</p>
+
+                            <form id="clinical-form" onsubmit="handleSaveClinicalEncounter(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Select Patient *</label>
+                                    <select id="clinical-patient-select" required onchange="onPatientSelectForClinical()" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                        <option value="">-- Choose Registered Patient --</option>
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1">Temp (°C)</label>
+                                        <input type="text" id="vitals-temp" placeholder="38.5" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1">BP (mmHg)</label>
+                                        <input type="text" id="vitals-bp" placeholder="120/80" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Symptoms / Complaints *</label>
+                                    <textarea id="clinical-symptoms" required rows="2" placeholder="e.g. fever, chills, severe headache" onkeyup="triggerDiseaseSuggestions(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5 focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+                                </div>
+
+                                <!-- SMART SUGGESTION ENGINE BOX -->
+                                <div id="suggestion-box" class="p-3 bg-sky-50 border border-sky-200 rounded-xl text-xs space-y-2">
+                                    <div class="flex items-center justify-between text-sky-900 font-bold">
+                                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles text-sky-600"></i> Disease Suggestion Engine</span>
+                                        <span class="text-[10px] bg-sky-200 text-sky-800 px-1.5 py-0.5 rounded">Smart Rule</span>
+                                    </div>
+                                    <div id="suggested-diseases" class="text-slate-600 text-xs italic">
+                                        Type symptoms above (e.g. fever, cough, chills) to view auto-suggestions...
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Final Diagnosis</label>
+                                    <input type="text" id="clinical-diagnosis" placeholder="e.g. Malaria Acute" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Order Lab Test? (Optional)</label>
+                                    <select id="clinical-lab-order" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5">
+                                        <option value="None">None - Direct Treatment</option>
+                                        <option value="Blood Smear (Malaria)">Blood Smear (Malaria MP)</option>
+                                        <option value="Full Blood Count (CBC)">Full Blood Count (CBC)</option>
+                                        <option value="Typhoid Widal Test">Typhoid Widal Test</option>
+                                        <option value="Urinalysis">Urinalysis Panel</option>
+                                    </select>
+                                </div>
+
+                                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                                    <label class="block text-xs font-bold text-slate-700">Prescribe Available Medicine</label>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <select id="prescribe-medicine" class="col-span-2 bg-white border border-slate-200 rounded-lg text-xs p-2" onchange="calculatePrescriptionCost()">
+                                            <option value="">-- Select Drug --</option>
+                                        </select>
+                                        <input type="number" id="prescribe-qty" min="1" value="1" placeholder="Qty" oninput="calculatePrescriptionCost()" class="bg-white border border-slate-200 rounded-lg text-xs p-2 text-center">
+                                    </div>
+                                    <div class="flex justify-between items-center text-xs pt-1">
+                                        <span class="text-slate-500">Calculated Cost:</span>
+                                        <span id="prescription-cost-display" class="font-bold text-emerald-600">$0.00</span>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-floppy-disk"></i> Save Clinical Record
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right: Encounters Record Feed -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">Encounters & Medical Records</h3>
+                                    <p class="text-xs text-slate-500">Complete historical chart for all consultations</p>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 font-semibold border-y border-slate-200">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Enc ID</th>
+                                            <th class="py-2.5 px-3">Patient</th>
+                                            <th class="py-2.5 px-3">Vitals / Symptoms</th>
+                                            <th class="py-2.5 px-3">Lab Status</th>
+                                            <th class="py-2.5 px-3">Diagnosis</th>
+                                            <th class="py-2.5 px-3">Rx Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="encounters-table-body" class="divide-y divide-slate-100 text-slate-700">
+                                        <!-- Dynamic Encounter Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 4. LABORATORY TESTS TAB -->
+                <div id="tab-lab" class="tab-panel hidden space-y-6">
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">Laboratory Queue & Testing Center</h3>
+                                <p class="text-xs text-slate-500">Technicians can review pending lab requests and record diagnostic results.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold text-slate-500">Active Duty:</span>
+                                <span class="badge bg-amber-100 text-amber-800 border border-amber-200">Lab Tech Mode</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-50 text-slate-500 font-semibold border-y border-slate-200">
+                                    <tr>
+                                        <th class="py-3 px-4">Enc ID</th>
+                                        <th class="py-3 px-4">Patient Name</th>
+                                        <th class="py-3 px-4">Requested Test</th>
+                                        <th class="py-3 px-4">Lab Status</th>
+                                        <th class="py-3 px-4">Lab Result Record</th>
+                                        <th class="py-3 px-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lab-table-body" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- Dynamic Lab Queue Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. INVENTORY & STOCK MANAGEMENT TAB -->
+                <div id="tab-inventory" class="tab-panel hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- Restock Form -->
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                            <h3 class="font-bold text-slate-800 text-lg">Stock Purchase & Restock</h3>
+                            <p class="text-xs text-slate-500">Add new pharmaceuticals or increase existing stock count.</p>
+
+                            <form id="stock-form" onsubmit="handleAddStock(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Medicine Name *</label>
+                                    <input type="text" id="stock-name" required placeholder="e.g. Paracetamol 500mg" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Qty Added</label>
+                                        <input type="number" id="stock-qty" min="1" required placeholder="100" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Cost Price ($)</label>
+                                        <input type="number" step="0.01" id="stock-cost" required placeholder="2.00" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Sell Price ($)</label>
+                                        <input type="number" step="0.01" id="stock-sell" required placeholder="5.00" class="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs p-2">
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-indigo-600/20 transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-cart-plus"></i> Submit Stock Purchase
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Current Stock Inventory Table -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-bold text-slate-800 text-base">Available Pharmacy Stock</h3>
+                                    <p class="text-xs text-slate-500">Live quantity tracking & unit pricing</p>
+                                </div>
+                                <span class="badge bg-indigo-100 text-indigo-800">Part 3: Inventory Engine</span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50 text-slate-500 font-semibold border-y border-slate-200">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Medicine</th>
+                                            <th class="py-2.5 px-3">In Stock</th>
+                                            <th class="py-2.5 px-3">Cost Price</th>
+                                            <th class="py-2.5 px-3">Selling Price</th>
+                                            <th class="py-2.5 px-3">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stock-table-body" class="divide-y divide-slate-100 text-slate-700">
+                                        <!-- Dynamic Stock Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 6. ADMIN ROLES & FINANCIAL REPORTING TAB -->
+                <div id="tab-admin" class="tab-panel hidden space-y-6">
+                    <!-- Income vs Expenditure Metric Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+                            <p class="text-xs font-semibold uppercase text-slate-400">Total Income / Revenue</p>
+                            <h3 id="financial-income" class="text-2xl font-bold text-emerald-600 mt-1">$0.00</h3>
+                            <p class="text-xs text-slate-500 mt-1">From prescriptions & patient consultations</p>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500">
+                            <p class="text-xs font-semibold uppercase text-slate-400">Total Stock Expenditure</p>
+                            <h3 id="financial-expenditure" class="text-2xl font-bold text-rose-600 mt-1">$0.00</h3>
+                            <p class="text-xs text-slate-500 mt-1">Purchased medicine stock inventory</p>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-l-4 border-l-sky-500">
+                            <p class="text-xs font-semibold uppercase text-slate-400">Calculated Net Profit</p>
+                            <h3 id="financial-profit" class="text-2xl font-bold text-sky-600 mt-1">$0.00</h3>
+                            <p class="text-xs text-slate-500 mt-1">Income minus Stock Purchases</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Admin Staff Management -->
+                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                            <h3 class="font-bold text-slate-800 text-base">Assign Staff Roles</h3>
+                            <p class="text-xs text-slate-500">Create new staff accounts and set role permissions.</p>
+
+                            <form id="assign-role-form" onsubmit="handleAssignRole(event)" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Staff Email *</label>
+                                    <input type="email" id="staff-email" required placeholder="user@clinic.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+                                    <input type="password" id="staff-pass" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Assign System Role *</label>
+                                    <select id="staff-role" required class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5">
+                                        <option value="Admin">Administrator</option>
+                                        <option value="Nurse">Nurse</option>
+                                        <option value="Registration Staff">Registration Staff</option>
+                                        <option value="Lab Technician">Lab Technician</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-user-plus"></i> Register & Assign Role
+                                </button>
+                            </form>
+
+                            <div class="mt-4 pt-4 border-t border-slate-100">
+                                <h4 class="font-bold text-slate-800 text-xs mb-2">Staff Roster</h4>
+                                <ul id="staff-list" class="space-y-2 text-xs">
+                                    <!-- Dynamic Staff List -->
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Financial Visual Chart & Expenses Log -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                            <h3 class="font-bold text-slate-800 text-base">Financial Overview Chart</h3>
+                            <div class="h-64 relative">
+                                <canvas id="financialChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- AUTHENTICATION / LOGIN MODAL DIALOG -->
+    <div id="login-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 relative">
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">Staff Sign In</h3>
+                <p class="text-xs text-slate-500">Access role-restricted clinical controls</p>
+            </div>
+
+            <form onsubmit="handleModalLogin(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                    <input type="email" id="login-modal-email" required placeholder="admin@clinic.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                    <input type="password" id="login-modal-pass" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs p-2.5">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm rounded-xl shadow-md shadow-sky-600/20 transition">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="p-3 bg-slate-50 rounded-xl text-[11px] text-slate-600 space-y-1">
+                <p class="font-bold text-slate-800">Preconfigured Demo Credentials:</p>
+                <p>• Admin: admin@clinic.com / admin123</p>
+                <p>• Nurse: nurse@clinic.com / nurse123</p>
+                <p>• Registration: reg@clinic.com / reg123</p>
+                <p>• Lab Tech: lab@clinic.com / lab123</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // IN-MEMORY DATABASE STATE (PART 1, PART 2 & PART 3)
+        // =========================================================================
+        
+        let state = {
+            currentUser: { email: "admin@clinic.com", role: "Admin" },
+            
+            // Staff Accounts (Part 1)
+            staff: [
+                { id: 1, email: "admin@clinic.com", pass: "admin123", role: "Admin" },
+                { id: 2, email: "nurse@clinic.com", pass: "nurse123", role: "Nurse" },
+                { id: 3, email: "reg@clinic.com", pass: "reg123", role: "Registration Staff" },
+                { id: 4, email: "lab@clinic.com", pass: "lab123", role: "Lab Technician" }
+            ],
+
+            // Patient Database with sequential ID auto-assignment (Part 1)
+            patients: [
+                { id: 101, name: "John Mark", phone: "0712345678", visitsCount: 2, registeredAt: "2026-10-01 09:15" },
+                { id: 102, name: "Mary Atieno", phone: "0722987654", visitsCount: 1, registeredAt: "2026-10-05 11:30" },
+                { id: 103, name: "David Kimani", phone: "0733112233", visitsCount: 1, registeredAt: "2026-10-07 08:20" }
+            ],
+
+            // Clinical Encounters & Medical Records (Part 2)
+            encounters: [
+                {
+                    id: 5001,
+                    patientId: 101,
+                    patientName: "John Mark",
+                    vitals: "Temp: 38.8°C, BP: 125/82",
+                    symptoms: "fever, chills, body weakness",
+                    diagnosis: "Malaria Acute",
+                    labTest: "Blood Smear (Malaria)",
+                    labResult: "Positive for Plasmodium falciparum",
+                    labStatus: "Completed",
+                    medicine: "Artemether (Malaria)",
+                    qty: 2,
+                    medicineCost: 50.00,
+                    createdAt: "2026-10-07 08:45"
+                },
+                {
+                    id: 5002,
+                    patientId: 102,
+                    patientName: "Mary Atieno",
+                    vitals: "Temp: 37.1°C, BP: 118/75",
+                    symptoms: "headache, fatigue",
+                    diagnosis: "Pending Lab",
+                    labTest: "Full Blood Count (CBC)",
+                    labResult: "--",
+                    labStatus: "Pending",
+                    medicine: "--",
+                    qty: 0,
+                    medicineCost: 0.00,
+                    createdAt: "2026-10-07 09:30"
+                }
+            ],
+
+            // Inventory & Stock (Part 3)
+            stock: [
+                { id: 1, name: "Paracetamol 500mg", qty: 120, costPrice: 2.00, sellPrice: 5.00 },
+                { id: 2, name: "Amoxicillin 250mg", qty: 45, costPrice: 8.00, sellPrice: 15.00 },
+                { id: 3, name: "Artemether (Malaria)", qty: 30, costPrice: 12.00, sellPrice: 25.00 },
+                { id: 4, name: "Ibuprofen 400mg", qty: 90, costPrice: 3.50, sellPrice: 8.00 }
+            ],
+
+            // Financial Expenditures (Part 3)
+            expenditures: [
+                { id: 1, description: "Stock Purchase: Paracetamol x100", amount: 200.00, date: "2026-10-01" },
+                { id: 2, description: "Stock Purchase: Artemether x40", amount: 480.00, date: "2026-10-02" }
+            ]
+        };
+
+        let financialChartInstance = null;
+
+        // =========================================================================
+        // INITIALIZATION & UI LIFECYCLE
+        // =========================================================================
+        window.onload = function() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            renderAllViewports();
+            initChart();
+        };
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString();
+            document.getElementById('live-date').innerText = now.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-amber-600';
+            const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-bell';
+            
+            toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center justify-between text-xs transition-all duration-300 pointer-events-auto transform translate-y-2 opacity-0`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid ${icon}"></i>
+                    <span class="font-medium">${message}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-4 opacity-70 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // =========================================================================
+        // TAB NAVIGATION & ROLE CONTROL
+        // =========================================================================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-sky-600', 'text-white');
+                btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-slate-800');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if(activeNav) {
+                activeNav.classList.add('bg-sky-600', 'text-white');
+                activeNav.classList.remove('text-slate-400');
+            }
+
+            // Update page title
+            const titles = {
+                dashboard: "Clinic Operational Dashboard",
+                registration: "Patient Intake & Records",
+                encounters: "Clinical Consultation & Vitals",
+                lab: "Laboratory Diagnostics Center",
+                inventory: "Pharmacy & Stock Inventory",
+                admin: "Admin Staff Management & Finances"
+            };
+            document.getElementById('page-title').innerText = titles[tabId] || "Clinic Dashboard";
+        }
+
+        function switchRole(email) {
+            const user = state.staff.find(s => s.email === email);
+            if(user) {
+                state.currentUser = { email: user.email, role: user.role };
+                document.getElementById('user-email').innerText = user.email;
+                document.getElementById('user-role-badge').innerText = user.role;
+                document.getElementById('user-avatar').innerText = user.role.substring(0, 2).toUpperCase();
+                showToast(`Switched active role to: ${user.role}`, 'info');
+                renderAllViewports();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+
+        // =========================================================================
+        // PART 1: PATIENT REGISTRATION & RETURNING CHECK
+        // =========================================================================
+        function checkExistingPatientByPhone(phoneVal) {
+            const alertBox = document.getElementById('returning-patient-alert');
+            const nameInput = document.getElementById('reg-name');
+            const trimmed = phoneVal.trim();
+
+            if(!trimmed) {
+                alertBox.classList.add('hidden');
+                return;
+            }
+
+            const existing = state.patients.find(p => p.phone === trimmed);
+            if(existing) {
+                alertBox.classList.remove('hidden');
+                document.getElementById('returning-msg').innerText = `Returning Patient Found: ${existing.name} (Patient #${existing.id}). Total Visits: ${existing.visitsCount}.`;
+                nameInput.value = existing.name;
+            } else {
+                alertBox.classList.add('hidden');
+            }
+        }
+
+        function handlePatientRegistration(e) {
+            e.preventDefault();
+            if(!checkPermission(['Admin', 'Registration Staff'])) return;
+
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+
+            const existing = state.patients.find(p => p.phone === phone);
+
+            if(existing) {
+                existing.visitsCount += 1;
+                showToast(`Returning Visit Recorded! Patient #${existing.id} (${existing.name}) visit count updated to ${existing.visitsCount}.`);
+            } else {
+                const newId = state.patients.length > 0 ? Math.max(...state.patients.map(p => p.id)) + 1 : 101;
+                const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
+                state.patients.unshift({
+                    id: newId,
+                    name: name,
+                    phone: phone,
+                    visitsCount: 1,
+                    registeredAt: now
+                });
+                showToast(`New Patient Registered! Assigned ID: #${newId}`);
+            }
+
+            document.getElementById('patient-reg-form').reset();
+            document.getElementById('returning-patient-alert').classList.add('hidden');
+            renderAllViewports();
+        }
+
+        // =========================================================================
+        // PART 2: CLINICAL WORKFLOW, DIAGNOSIS & SMART SUGGESTIONS
+        // =========================================================================
+        function triggerDiseaseSuggestions(symptomsText) {
+            const text = symptomsText.toLowerCase();
+            const display = document.getElementById('suggested-diseases');
+            let matches = [];
+
+            if(text.includes('fever') && text.includes('chills')) matches.push('Malaria Acute (Smear Recommended)');
+            if(text.includes('cough') || text.includes('flu')) matches.push('Upper Respiratory Tract Infection');
+            if(text.includes('headache') || text.includes('fatigue')) matches.push('Tension Headache / Anemia');
+            if(text.includes('stomach') || text.includes('diarrhea')) matches.push('Gastroenteritis / Typhoid');
+
+            if(matches.length > 0) {
+                display.innerHTML = `<ul class="list-disc pl-4 space-y-0.5 text-sky-800 font-medium">` + 
+                    matches.map(m => `<li>${m}</li>`).join('') + `</ul>`;
+            } else {
+                display.innerText = "Type symptoms above (e.g. fever, cough, chills) to view auto-suggestions...";
+            }
+        }
+
+        function onPatientSelectForClinical() {
+            // Placeholder for auto-populating patient historic context if needed
+        }
+
+        function calculatePrescriptionCost() {
+            const drugSelect = document.getElementById('prescribe-medicine');
+            const qtyInput = document.getElementById('prescribe-qty');
+            const costDisplay = document.getElementById('prescription-cost-display');
+
+            const selectedName = drugSelect.value;
+            const qty = parseInt(qtyInput.value) || 0;
+
+            const drug = state.stock.find(s => s.name === selectedName);
+            if(drug && qty > 0) {
+                const total = drug.sellPrice * qty;
+                costDisplay.innerText = `$${total.toFixed(2)}`;
+            } else {
+                costDisplay.innerText = '$0.00';
+            }
+        }
+
+        function handleSaveClinicalEncounter(e) {
+            e.preventDefault();
+            if(!checkPermission(['Admin', 'Nurse'])) return;
+
+            const patientId = parseInt(document.getElementById('clinical-patient-select').value);
+            const patient = state.patients.find(p => p.id === patientId);
+            if(!patient) {
+                showToast("Please select a valid patient.", "error");
+                return;
+            }
+
+            const temp = document.getElementById('vitals-temp').value || '37.0';
+            const bp = document.getElementById('vitals-bp').value || '120/80';
+            const symptoms = document.getElementById('clinical-symptoms').value;
+            const diagnosis = document.getElementById('clinical-diagnosis').value || 'Under Evaluation';
+            const labTest = document.getElementById('clinical-lab-order').value;
+            const drugName = document.getElementById('prescribe-medicine').value;
+            const qty = parseInt(document.getElementById('prescribe-qty').value) || 0;
+
+            let medicineCost = 0.00;
+            if(drugName && qty > 0) {
+                const drug = state.stock.find(s => s.name === drugName);
+                if(drug) {
+                    if(drug.qty < qty) {
+                        showToast(`Insufficient stock! Only ${drug.qty} units available.`, 'error');
+                        return;
+                    }
+                    drug.qty -= qty; // Deduct stock available
+                    medicineCost = drug.sellPrice * qty;
+                }
+            }
+
+            const newEncId = state.encounters.length > 0 ? Math.max(...state.encounters.map(e => e.id)) + 1 : 5001;
+            const now = new Date().toISOString().replace('T', ' ').substring(0, 16);
+
+            state.encounters.unshift({
+                id: newEncId,
+                patientId: patient.id,
+                patientName: patient.name,
+                vitals: `Temp: ${temp}°C, BP: ${bp}`,
+                symptoms: symptoms,
+                diagnosis: diagnosis,
+                labTest: labTest,
+                labResult: labTest !== 'None' ? '--' : 'N/A',
+                labStatus: labTest !== 'None' ? 'Pending' : 'Completed',
+                medicine: drugName ? `${drugName} (x${qty})` : '--',
+                qty: qty,
+                medicineCost: medicineCost,
+                createdAt: now
+            });
+
+            showToast(`Clinical Encounter Saved! Enc ID #${newEncId}`);
+            document.getElementById('clinical-form').reset();
+            document.getElementById('prescription-cost-display').innerText = '$0.00';
+            renderAllViewports();
+        }
+
+        // =========================================================================
+        // PART 2: LAB TECHNICIAN WORKFLOW
+        // =========================================================================
+        function submitLabResult(encId) {
+            if(!checkPermission(['Admin', 'Lab Technician'])) return;
+
+            const inputEl = document.getElementById(`lab-result-input-${encId}`);
+            const resultValue = inputEl ? inputEl.value.trim() : '';
+
+            if(!resultValue) {
+                showToast("Please enter a valid lab result.", "error");
+                return;
+            }
+
+            const enc = state.encounters.find(e => e.id === encId);
+            if(enc) {
+                enc.labResult = resultValue;
+                enc.labStatus = "Completed";
+                showToast(`Lab result submitted for Encounter #${encId}`);
+                renderAllViewports();
+            }
+        }
+
+        // =========================================================================
+        // PART 3: INVENTORY RESTOCK & ADMIN ROLES
+        // =========================================================================
+        function handleAddStock(e) {
+            e.preventDefault();
+            if(!checkPermission(['Admin'])) return;
+
+            const name = document.getElementById('stock-name').value.trim();
+            const qty = parseInt(document.getElementById('stock-qty').value);
+            const cost = parseFloat(document.getElementById('stock-cost').value);
+            const sell = parseFloat(document.getElementById('stock-sell').value);
+
+            const existing = state.stock.find(s => s.name.toLowerCase() === name.toLowerCase());
+            if(existing) {
+                existing.qty += qty;
+                existing.costPrice = cost;
+                existing.sellPrice = sell;
+            } else {
+                const newId = state.stock.length + 1;
+                state.stock.push({ id: newId, name: name, qty: qty, costPrice: cost, sellPrice: sell });
+            }
+
+            // Record stock purchase expenditure
+            const totalExpense = cost * qty;
+            state.expenditures.push({
+                id: state.expenditures.length + 1,
+                description: `Purchased Stock: ${name} (x${qty})`,
+                amount: totalExpense,
+                date: new Date().toISOString().substring(0, 10)
+            });
+
+            showToast(`Stock updated & Expenditure of $${totalExpense.toFixed(2)} logged!`);
+            document.getElementById('stock-form').reset();
+            renderAllViewports();
+        }
+
+        function handleAssignRole(e) {
+            e.preventDefault();
+            if(!checkPermission(['Admin'])) return;
+
+            const email = document.getElementById('staff-email').value.trim();
+            const pass = document.getElementById('staff-pass').value;
+            const role = document.getElementById('staff-role').value;
+
+            const existing = state.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
+            if(existing) {
+                existing.role = role;
+                showToast(`Updated role for ${email} to ${role}`);
+            } else {
+                state.staff.push({ id: state.staff.length + 1, email: email, pass: pass, role: role });
+                showToast(`Assigned ${email} as ${role}`);
+            }
+
+            document.getElementById('assign-role-form').reset();
+            renderAllViewports();
+        }
+
+        function checkPermission(allowedRoles) {
+            if(!allowedRoles.includes(state.currentUser.role)) {
+                showToast(`Unauthorized: '${state.currentUser.role}' role cannot perform this action.`, 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // =========================================================================
+        // VIEW RENDERERS & DATA BINDING
+        // =========================================================================
+        function renderAllViewports() {
+            renderDashboardStats();
+            renderPatientsTable();
+            renderClinicalDropdowns();
+            renderEncountersTable();
+            renderLabQueue();
+            renderStockTable();
+            renderFinancials();
+            renderStaffList();
+        }
+
+        function renderDashboardStats() {
+            document.getElementById('stat-patients-count').innerText = state.patients.length;
+            document.getElementById('stat-encounters-count').innerText = state.encounters.length;
+            
+            const pendingLabs = state.encounters.filter(e => e.labStatus === 'Pending').length;
+            document.getElementById('stat-pending-labs').innerText = pendingLabs;
+
+            const totalRevenue = state.encounters.reduce((sum, e) => sum + e.medicineCost, 0);
+            document.getElementById('stat-revenue-dash').innerText = `$${totalRevenue.toFixed(2)}`;
+
+            // Recent visits table
+            const recentContainer = document.getElementById('dashboard-recent-visits');
+            recentContainer.innerHTML = state.encounters.slice(0, 5).map(e => `
+                <tr>
+                    <td class="py-2 px-3 font-semibold text-slate-800">#${e.patientId}</td>
+                    <td class="py-2 px-3">${e.patientName}</td>
+                    <td class="py-2 px-3">${e.vitals}</td>
+                    <td class="py-2 px-3"><span class="badge ${e.diagnosis.includes('Pending') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">${e.diagnosis}</span></td>
+                    <td class="py-2 px-3">
+                        <button onclick="switchTab('encounters')" class="text-sky-600 hover:underline">View Chart</button>
+                    </td>
+                </tr>
+            `).join('') || `<tr><td colspan="5" class="py-3 text-center text-slate-400">No recent visits</td></tr>`;
+        }
+
+        function renderPatientsTable() {
+            const body = document.getElementById('patients-table-body');
+            body.innerHTML = state.patients.map(p => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2.5 px-3 font-bold text-sky-600">#${p.id}</td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-800">${p.name}</td>
+                    <td class="py-2.5 px-3 text-slate-600">${p.phone}</td>
+                    <td class="py-2.5 px-3"><span class="badge ${p.visitsCount > 1 ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">${p.visitsCount} Visit(s)</span></td>
+                    <td class="py-2.5 px-3 text-slate-400">${p.registeredAt}</td>
+                    <td class="py-2.5 px-3">
+                        <button onclick="quickStartClinicalForPatient(${p.id})" class="px-2 py-1 bg-sky-100 text-sky-700 hover:bg-sky-200 rounded text-[11px] font-semibold">Start Visit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterPatientsTable() {
+            const query = document.getElementById('search-patients-input').value.toLowerCase();
+            const rows = document.querySelectorAll('#patients-table-body tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function quickStartClinicalForPatient(patientId) {
+            switchTab('encounters');
+            document.getElementById('clinical-patient-select').value = patientId;
+        }
+
+        function renderClinicalDropdowns() {
+            // Patient Select Dropdown
+            const patientSelect = document.getElementById('clinical-patient-select');
+            patientSelect.innerHTML = `<option value="">-- Choose Registered Patient --</option>` + 
+                state.patients.map(p => `<option value="${p.id}">#${p.id} - ${p.name} (${p.phone})</option>`).join('');
+
+            // Available Medicine Select Dropdown (Part 3 Suggestion)
+            const medSelect = document.getElementById('prescribe-medicine');
+            medSelect.innerHTML = `<option value="">-- Select Drug --</option>` + 
+                state.stock.filter(s => s.qty > 0).map(s => `<option value="${s.name}">${s.name} (${s.qty} in stock - $${s.sellPrice.toFixed(2)})</option>`).join('');
+        }
+
+        function renderEncountersTable() {
+            const body = document.getElementById('encounters-table-body');
+            body.innerHTML = state.encounters.map(e => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2.5 px-3 font-bold text-slate-700">#${e.id}</td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-800">#${e.patientId} - ${e.patientName}</td>
+                    <td class="py-2.5 px-3 text-slate-600"><span class="font-medium">${e.vitals}</span><br><span class="text-[11px] text-slate-400">Sx: ${e.symptoms}</span></td>
+                    <td class="py-2.5 px-3">
+                        <span class="badge ${e.labStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800' : e.labStatus === 'Pending' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}">
+                            ${e.labStatus}
+                        </span>
+                    </td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-800">${e.diagnosis}</td>
+                    <td class="py-2.5 px-3 font-bold text-emerald-600">$${e.medicineCost.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderLabQueue() {
+            const body = document.getElementById('lab-table-body');
+            const labOrders = state.encounters.filter(e => e.labTest !== 'None');
+
+            if(labOrders.length === 0) {
+                body.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-400">No active laboratory orders found.</td></tr>`;
+                return;
+            }
+
+            body.innerHTML = labOrders.map(e => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-4 font-bold text-slate-800">#${e.id}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800">${e.patientName}</td>
+                    <td class="py-3 px-4 font-bold text-indigo-600">${e.labTest}</td>
+                    <td class="py-3 px-4">
+                        <span class="badge ${e.labStatus === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                            ${e.labStatus}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        ${e.labStatus === 'Completed' 
+                            ? `<span class="font-bold text-slate-800">${e.labResult}</span>` 
+                            : `<input type="text" id="lab-result-input-${e.id}" placeholder="Enter laboratory findings..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-xs">`}
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        ${e.labStatus === 'Pending' 
+                            ? `<button onclick="submitLabResult(${e.id})" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold text-xs transition">Submit Result</button>` 
+                            : `<span class="text-xs text-slate-400"><i class="fa-solid fa-check"></i> Filed</span>`}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderStockTable() {
+            const body = document.getElementById('stock-table-body');
+            body.innerHTML = state.stock.map(s => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-2.5 px-3 font-semibold text-slate-800">${s.name}</td>
+                    <td class="py-2.5 px-3 font-bold ${s.qty < 10 ? 'text-rose-600' : 'text-slate-800'}">${s.qty} units</td>
+                    <td class="py-2.5 px-3 text-slate-600">$${s.costPrice.toFixed(2)}</td>
+                    <td class="py-2.5 px-3 font-semibold text-emerald-600">$${s.sellPrice.toFixed(2)}</td>
+                    <td class="py-2.5 px-3">
+                        <span class="badge ${s.qty > 20 ? 'bg-emerald-100 text-emerald-800' : s.qty > 0 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}">
+                            ${s.qty > 20 ? 'In Stock' : s.qty > 0 ? 'Low Stock' : 'Out of Stock'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFinancials() {
+            const income = state.encounters.reduce((sum, e) => sum + e.medicineCost, 0);
+            const expenditure = state.expenditures.reduce((sum, x) => sum + x.amount, 0);
+            const profit = income - expenditure;
+
+            document.getElementById('financial-income').innerText = `$${income.toFixed(2)}`;
+            document.getElementById('financial-expenditure').innerText = `$${expenditure.toFixed(2)}`;
+            document.getElementById('financial-profit').innerText = `$${profit.toFixed(2)}`;
+
+            updateChart(income, expenditure, profit);
+        }
+
+        function renderStaffList() {
+            const container = document.getElementById('staff-list');
+            container.innerHTML = state.staff.map(s => `
+                <li class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200">
+                    <span class="font-medium text-slate-800">${s.email}</span>
+                    <span class="badge bg-sky-100 text-sky-800">${s.role}</span>
+                </li>
+            `).join('');
+        }
+
+        // =========================================================================
+        // CHART.JS FINANCIAL VISUALIZATION
+        // =========================================================================
+        function initChart() {
+            const ctx = document.getElementById('financialChart').getContext('2d');
+            financialChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Income (Prescriptions)', 'Expenditure (Stock Purchases)', 'Net Profit'],
+                    datasets: [{
+                        label: 'Clinic Financial Balance ($ USD)',
+                        data: [0, 0, 0],
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(244, 63, 94, 0.7)',
+                            'rgba(2, 132, 199, 0.7)'
+                        ],
+                        borderColor: [
+                            '#10b981',
+                            '#f43f5e',
+                            '#0284c7'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+            renderFinancials();
+        }
+
+        function updateChart(income, expenditure, profit) {
+            if(financialChartInstance) {
+                financialChartInstance.data.datasets[0].data = [income, expenditure, profit];
+                financialChartInstance.update();
+            }
+        }
+
+        // =========================================================================
+        // AUTHENTICATION MODAL HANDLERS
+        // =========================================================================
+        function openLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+        }
+
+        function handleModalLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-modal-email').value.trim();
+            const pass = document.getElementById('login-modal-pass').value;
+
+            const user = state.staff.find(s => s.email === email && s.pass === pass);
+            if(user) {
+                switchRole(user.email);
+                closeLoginModal();
+                showToast(`Authenticated successfully as ${user.role}`);
+            } else {
+                showToast("Invalid email or password.", "error");
+            }
+        }
+    </script>
+</body>
+</html>
