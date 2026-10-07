@@ -821,3 +821,16 @@
     </script>
 </body>
 </html>
+<button onclick="resetAllData()" style="background-color: #dc3545; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">
+    Reset All System Data
+</button>
+
+<script>
+function resetAllData() {
+    if (confirm("Are you sure you want to clear all patient records, stocks, expenditure, and income? This action cannot be undone.")) {
+        localStorage.clear();
+        alert("All system data has been reset.");
+        location.reload();
+    }
+}
+</script>
